@@ -44,6 +44,10 @@ echo "=== launch file references ==="
 $PY scripts/check_launch_refs.py
 
 echo
+echo "=== simulation/hardware parity ==="
+$PY scripts/check_bringup_parity.py
+
+echo
 echo "=== named destinations reachable on the map ==="
 $PY scripts/check_destinations.py
 

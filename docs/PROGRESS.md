@@ -30,8 +30,8 @@ comes next. **Every completed piece of work gets an entry here.**
 | 12 | Physical robot bringup | ⬜ Blocked | waiting on parts |
 
 **Verification status:** everything marked ✅ has automated checks that run on
-macOS via `./scripts/run_tests.sh` — **132 Python tests, 46 native firmware
-checks and 6 structural validators**, in about three seconds. The backend and
+macOS via `./scripts/run_tests.sh` — **133 Python tests, 46 native firmware
+checks and 7 structural validators**, in about three seconds. The backend and
 website have additionally been run together and driven through a real
 browser. Nothing has yet been executed inside a ROS master or on physical
 hardware — that is the honest state of the project, and both gaps are tracked
@@ -255,8 +255,10 @@ checker found the **"AI Lab" destination placed inside a table** at
 
 **Notes**
 
-- `sim.launch` and `real.launch` differ by exactly one include. That
-  difference is the payoff for the whole architecture.
+- `sim.launch` and `real.launch` include navigation, the mission manager and
+  rosbridge identically; only the robot layer swaps (Gazebo, versus the URDF
+  plus the hardware bridge and LiDAR driver). That boundary is the payoff for
+  the whole architecture.
 - Mission state lives in ROS, not the backend, so the robot finishes safely
   even if the API process dies mid-mission.
 
@@ -394,6 +396,34 @@ browser deliberately hides which, so the message now names both causes.
 
 ---
 
+### 2026-09-11 — Documentation: the orientation guide
+
+**Built** — `docs/GUIDE.md`: how the product works step by step, how to run
+each of the three independently runnable pieces, the full feature list, the
+ten things worth knowing before they cost an afternoon, how to work on the
+code, and improvement ideas in priority order.
+
+**Also built** — `scripts/check_bringup_parity.py`, which enforces the
+project's central architectural claim automatically.
+
+**A claim in the documentation turned out to be false, and was corrected.**
+Four documents said `sim.launch` and `real.launch` "differ by exactly one
+line", and invited the reader to verify it. They do not: the robot layer is
+one include in sim (`robot_gazebo/simulation.launch`) and two in real
+(`robot_description` plus `robot_hardware`), and the files differ by 65 raw
+lines once arguments and comments are counted.
+
+What *is* true, and is the point worth making, is that **navigation, the
+mission manager and rosbridge are included identically in both**, and only
+the robot layer swaps. Every instance of the claim was rewritten to say that
+instead, and the new checker now proves it on every test run — mutation
+verified by adding a node to one file and confirming the check fails.
+
+This is worth recording because the claim was repeated confidently in four
+places and in several commit messages before anyone checked it.
+
+---
+
 ## Decisions
 
 Choices that were not obvious, recorded so they do not get re-argued.
@@ -422,6 +452,7 @@ Choices that were not obvious, recorded so they do not get re-argued.
 | 20 | Convert maps to PNG on request, not at upload | A map regenerated on disk is served fresh with no re-upload | Converting once at upload time |
 | 21 | WebSocket **and** polling on every live page | A dashboard that silently freezes when a socket drops is worse than one three seconds stale | WebSocket alone |
 | 22 | Show the backend's error text verbatim in the UI | "robot is already running mission 12" is actionable; "something went wrong" is not | Generic error toasts |
+| 23 | Enforce the sim/real parity claim with a script | The claim is the project's thesis and is repeated in four documents; an invariant nobody checks rots silently | Trusting the documentation |
 
 ---
 
@@ -475,9 +506,10 @@ What `./scripts/run_tests.sh` actually checks, and what each protects.
 | Navigation config sanity | 6 cross-checks | planner outrunning the drivetrain, sealed doorways |
 | Firmware native checks | 46 | protocol parsing, kinematics, PID guards |
 | ROS-side unit tests | 64 | odometry, bridge behaviour, mission state machine |
-| Backend API tests | 68 | endpoints, ROS sync, analytics arithmetic, PNG encoding |
+| Backend API tests | 69 | endpoints, ROS sync, analytics arithmetic, PNG encoding |
+| Simulation/hardware parity | 1 | the two bringup stacks silently diverging |
 
-**Total: 132 Python tests + 46 native checks + 6 structural validators.**
+**Total: 133 Python tests + 46 native checks + 7 structural validators.**
 
 The frontend is covered by `npm run build` and `npx tsc --noEmit`, plus the
 manual browser pass recorded above.

@@ -66,10 +66,24 @@ by an ESP32 driving two plastic gearmotors.
         └─────────────────┘                   └─────────────────┘
 ```
 
-The practical consequence: `robot_bringup/launch/sim.launch` and
-`robot_bringup/launch/real.launch` differ by **exactly one line** — which of
-those two boxes gets started. Open them side by side and check; that
-difference is the payoff for everything else in this document.
+The practical consequence: in `robot_bringup/launch/sim.launch` and
+`robot_bringup/launch/real.launch`, the navigation, mission-manager and
+rosbridge includes are **identical**. The only difference is which of those
+two boxes gets started underneath them:
+
+```
+sim.launch                        real.launch
+──────────                        ───────────
+robot_gazebo/simulation.launch    robot_description/description.launch
+                                  robot_hardware/hardware.launch
+────────────────────── identical below this line ──────────────────────
+robot_navigation/navigation.launch
+mission_manager/mission_manager.launch
+robot_bringup/rosbridge.launch
+```
+
+Open them side by side and check; that boundary is the payoff for everything
+else in this document.
 
 ---
 
@@ -781,7 +795,7 @@ Someone clicks **Deploy**. Here is the whole path.
 ```
 
 Step 6 is the only step that differs between simulation and reality. Every
-other step is byte-for-byte identical.
+other step runs exactly the same code, in the same nodes, either way.
 
 ---
 

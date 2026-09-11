@@ -5,10 +5,11 @@
       roslaunch robot_bringup real.launch transport:=serial
       roslaunch robot_bringup real.launch transport:=tcp esp32_ip:=192.168.1.50
 
-  Compare this file with sim.launch: the ONLY difference is that
-  robot_gazebo/simulation.launch is replaced by robot_hardware/hardware.launch.
-  Navigation, the mission manager, the bridge and everything above them are
-  byte-for-byte identical. That is the whole point of the architecture.
+  Compare this file with sim.launch. The navigation, mission_manager and
+  rosbridge includes are IDENTICAL in both. The only thing that changes is the
+  robot layer: sim.launch starts robot_gazebo/simulation.launch, while this
+  file starts the URDF without Gazebo plugins plus robot_hardware/hardware.launch.
+  That boundary is the whole point of the architecture.
 
   Before running this, work through docs/HARDWARE_INTEGRATION.md - in
   particular do NOT skip the wheel-direction and encoder-sign checks.

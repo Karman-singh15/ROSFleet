@@ -16,8 +16,9 @@ you can say *"send RB001 to the AI Lab"* and watch it happen.
 ```
 
 The whole project rests on one idea: **the robot is defined by a set of ROS
-topics, not by its hardware.** `robot_bringup/launch/sim.launch` and
-`real.launch` differ by exactly one line.
+topics, not by its hardware.** In `robot_bringup/launch/sim.launch` and
+`real.launch`, the navigation, mission and bridge includes are identical —
+only the robot layer swaps between Gazebo and the ESP32 chassis.
 
 ---
 
@@ -25,7 +26,8 @@ topics, not by its hardware.** `robot_bringup/launch/sim.launch` and
 
 | Document | What it is for |
 |---|---|
-| **[docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md)** | How the whole system works, from the button on the website to the voltage on a motor pin. Read this first. |
+| **[docs/GUIDE.md](docs/GUIDE.md)** | **Start here.** How it works step by step, how to run it, every feature, what to watch out for, and what to build next. |
+| **[docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md)** | The technical detail behind each layer, from the button on the website to the voltage on a motor pin. |
 | **[docs/HARDWARE_INTEGRATION.md](docs/HARDWARE_INTEGRATION.md)** | Step-by-step guide to connecting the physical robot, with a check at every stage. |
 | **[docs/PROGRESS.md](docs/PROGRESS.md)** | Running implementation log: what is built, what was decided and why, what is next. |
 
