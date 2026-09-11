@@ -23,15 +23,17 @@ comes next. **Every completed piece of work gets an entry here.**
 | 6 | Navigation stack | ✅ Done | configs written and cross-validated |
 | 7 | Mission manager | ✅ Done | 27 tests incl. the cancel/arrive race |
 | 8 | Docker environment | ⚠️ Written, unverified | Docker not installed on this machine |
-| 9 | Backend (FastAPI + PostgreSQL) | ⬜ Not started | |
+| 9 | Backend (FastAPI + PostgreSQL) | ✅ Done | 55 tests + live uvicorn smoke test |
 | 10 | Frontend (Next.js) | ⬜ Not started | |
 | 11 | Analytics + digital twin | ⬜ Not started | |
 | 12 | Physical robot bringup | ⬜ Blocked | waiting on parts |
 
 **Verification status:** everything marked ✅ has automated checks that run on
-macOS via `./scripts/run_tests.sh`. Nothing has yet been executed inside ROS
-or on physical hardware — that is the honest state of the project, and the
-two gaps are tracked below as open risks.
+macOS via `./scripts/run_tests.sh` — **119 Python tests, 46 native firmware
+checks and 6 structural validators**. The backend has additionally been run
+for real under uvicorn and driven with HTTP requests. Nothing has yet been
+executed inside a ROS master or on physical hardware — that is the honest
+state of the project, and both gaps are tracked below as open risks.
 
 ---
 
@@ -285,6 +287,59 @@ built and the container has never run. **This is the first thing to test.**
 
 ---
 
+### 2026-09-11 — Phase 9: backend
+
+**Commit** `e45d9e7` *Add FastAPI backend with mission, map and analytics APIs*
+
+**Built**
+
+- SQLAlchemy models: robots, maps, destinations, missions, mission events,
+  telemetry.
+- `mission_service` — resolves a destination name to a pose, writes the row,
+  calls ROS with the row id so both sides share one mission identifier.
+- `ros_client` — one interface, three implementations: `RosBridgeClient`
+  (real), `NullRosClient` (no ROS running), `FakeRosClient` (tests).
+- `ros_sync` — ROS topics into the database and out to browsers.
+- `map_service` — parses the `.yaml` and `.pgm` header directly.
+- `analytics_service` — computed on demand, no pre-aggregation.
+- 21 REST endpoints plus a `/ws` WebSocket; `backend/seed.py`.
+
+**Verified** — 55 tests. Additionally run for real under uvicorn and driven
+with `curl`: health, robot creation, a mission correctly refused with
+"not connected to ROS", analytics, and the OpenAPI docs all responded.
+
+**Mutation-checked.** Three injected bugs were caught:
+
+| Injected bug | Caught by |
+|---|---|
+| terminal-state guard removed (a late ROS message rewrites a finished mission) | `test_a_late_message_cannot_resurrect_a_finished_mission` |
+| success rate counts in-flight missions in the denominator | `test_success_rate_excludes_in_flight_missions` |
+| a ROS-refused mission left `QUEUED` instead of `FAILED` | `test_a_mission_ros_refuses_is_failed_not_left_queued` |
+
+**A fourth mutation initially passed, which was itself the finding.** The
+NaN-battery test round-tripped through SQLite, and **SQLite silently coerces
+NaN to NULL** — so the test passed with the guard removed, and the bug would
+only have appeared in production against PostgreSQL, where NaN survives and
+`json.dumps` emits the bare token `NaN`, which is not valid JSON and breaks
+the dashboard's fetch. The guard was extracted to
+`robot_service.clean_float()` and the test now targets it directly; the
+mutation is now caught.
+
+**Notes**
+
+- A mission **copies** its destination's name and pose at creation rather
+  than only referencing them. Destinations get renamed and deleted; finished
+  history must keep meaning regardless.
+- Cancelling succeeds even when ROS is unreachable. A mission left running in
+  the database for a robot that is gone is worse than a cancel ROS never
+  heard — the robot's own watchdogs stop it either way.
+- The backend starts with or without ROS. A missing robot is a normal state,
+  not a startup failure, so the dashboard loads and shows everything offline.
+- `seed.py` is idempotent and re-syncs destinations from the ROS config,
+  verified by corrupting a row and re-running.
+
+---
+
 ## Decisions
 
 Choices that were not obvious, recorded so they do not get re-argued.
@@ -306,6 +361,10 @@ Choices that were not obvious, recorded so they do not get re-argued.
 | 13 | Cross-layer **consistency checkers** | Geometry appears in 3 files; a mismatch looks like a navigation bug and is nearly unfindable from the ROS side | Trusting discipline |
 | 14 | Pin `espressif32@6.5.0` | Arduino-ESP32 3.x renamed the LEDC API; an auto-upgrade would break motor control silently | Floating the platform version |
 | 15 | Exact arc odometry integration | The straight-line approximation drifts noticeably on tight indoor turns | The common simplified form |
+| 16 | Backend owns names, ROS owns poses | ROS never needs a database; the website never needs coordinates | Storing destinations in ROS params |
+| 17 | Missions copy their destination's pose | A renamed or deleted destination must not rewrite finished history | Referencing the destination only |
+| 18 | Analytics computed on demand | At this scale the query is instant; a stale cache that disagrees with the mission list confuses users far more | Pre-aggregated summary tables |
+| 19 | `NullRosClient` / `FakeRosClient` behind one interface | The entire backend and frontend are developable with no ROS and no robot | Mocking roslibpy per test |
 
 ---
 
@@ -333,13 +392,12 @@ In order.
    shows the map, a 2D Nav Goal makes it drive.
 3. **Fix whatever that reveals.** First contact with a real ROS master always
    finds something.
-4. **Phase 9 — backend.** FastAPI + PostgreSQL: robots, maps, destinations,
-   missions, telemetry; rosbridge client; WebSocket push to the frontend.
+4. **Connect the backend to the running ROS.** `docker compose up -d`, then
+   `POST /api/missions` and watch the robot move in Gazebo. This is the first
+   moment the whole stack is proven together.
 5. **Phase 10 — frontend.** Dashboard, robot detail, map view with
    click-to-place destinations, mission deployment, live status.
-6. **Phase 11 — analytics.** Success rate, average duration, distance,
-   utilisation, failure breakdown.
-7. **Phase 12 — hardware.** Follow `docs/HARDWARE_INTEGRATION.md` from
+6. **Phase 12 — hardware.** Follow `docs/HARDWARE_INTEGRATION.md` from
    Step 1 the day the parts arrive.
 
 ---
@@ -357,6 +415,13 @@ What `./scripts/run_tests.sh` actually checks, and what each protects.
 | Destination reachability | per destination | goals inside walls and furniture |
 | Navigation config sanity | 6 cross-checks | planner outrunning the drivetrain, sealed doorways |
 | Firmware native checks | 46 | protocol parsing, kinematics, PID guards |
-| Python unit tests | 64 | odometry, bridge behaviour, mission state machine |
+| ROS-side unit tests | 64 | odometry, bridge behaviour, mission state machine |
+| Backend API tests | 55 | endpoints, ROS sync, analytics arithmetic |
 
-**Total: 64 Python tests + 46 native checks + 6 structural validators.**
+**Total: 119 Python tests + 46 native checks + 6 structural validators.**
+
+All of it runs on macOS in about three seconds with no ROS and no robot:
+
+```bash
+./scripts/run_tests.sh
+```
