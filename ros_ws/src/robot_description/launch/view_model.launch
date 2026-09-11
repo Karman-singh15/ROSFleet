@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!--
+  view_model.launch - sanity check the URDF in RViz with no Gazebo, no robot.
+  Run this FIRST after any change to the URDF.
+      roslaunch robot_description view_model.launch
+-->
+<launch>
+  <include file="$(find robot_description)/launch/description.launch">
+    <arg name="use_gazebo"        value="false"/>
+    <arg name="publish_joint_gui" value="true"/>
+  </include>
+
+  <node name="rviz" pkg="rviz" type="rviz" required="true"
+        args="-d $(find robot_description)/rviz/model.rviz"/>
+</launch>

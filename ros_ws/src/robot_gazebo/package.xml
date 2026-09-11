@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>robot_gazebo</name>
+  <version>0.1.0</version>
+  <description>
+    Gazebo simulation of the ROSFleet robot. Gazebo stands in for the
+    physical robot: it consumes /cmd_vel and produces /odom, /scan, /tf
+    and /joint_states - exactly the topics the real hardware produces.
+  </description>
+  <maintainer email="karmansw15@gmail.com">Karman Singh</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>gazebo_plugins</exec_depend>
+  <exec_depend>robot_description</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+</package>

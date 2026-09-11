@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<!--
+  robot.gazebo.xacro
+  ==================
+  SIMULATION ONLY. These two plugins are what make Gazebo behave like the
+  real robot's electronics:
+
+    libgazebo_ros_diff_drive  == ESP32 motor driver + encoders + odometry
+                                 subscribes /cmd_vel, publishes /odom + odom->base_footprint TF
+    libgazebo_ros_laser       == RPLiDAR + its ROS driver
+                                 publishes /scan
+
+  The REAL robot produces the exact same topics from robot_hardware +
+  the rplidar_ros driver, which is why nothing above this layer changes.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ================= DIFFERENTIAL DRIVE ================= -->
+  <gazebo>
+    <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+      <legacyMode>false</legacyMode>
+      <alwaysOn>true</alwaysOn>
+      <updateRate>30.0</updateRate>
+
+      <leftJoint>left_wheel_joint</leftJoint>
+      <rightJoint>right_wheel_joint</rightJoint>
+
+      <!-- MUST match the real robot's measured geometry -->
+      <wheelSeparation>${wheel_separation}</wheelSeparation>
+      <wheelDiameter>${2.0 * wheel_radius}</wheelDiameter>
+
+      <wheelTorque>5.0</wheelTorque>
+      <wheelAcceleration>1.0</wheelAcceleration>
+
+      <!-- THE CONTRACT: same names the real robot uses -->
+      <commandTopic>cmd_vel</commandTopic>
+      <odometryTopic>odom</odometryTopic>
+      <odometryFrame>odom</odometryFrame>
+      <robotBaseFrame>base_footprint</robotBaseFrame>
+
+      <!-- "world" = perfect ground truth, "encoder" = simulated wheel slip.
+           Use encoder so simulation is honest about drift, like real encoders. -->
+      <odometrySource>encoder</odometrySource>
+
+      <publishWheelTF>false</publishWheelTF>
+      <publishOdomTF>true</publishOdomTF>
+      <publishWheelJointState>true</publishWheelJointState>
+      <publishTf>true</publishTf>
+      <rosDebugLevel>na</rosDebugLevel>
+    </plugin>
+  </gazebo>
+
+  <!-- ================= LIDAR ================= -->
+  <gazebo reference="laser_link">
+    <sensor type="ray" name="rplidar_sensor">
+      <pose>0 0 0 0 0 0</pose>
+      <visualize>false</visualize>
+      <update_rate>10.0</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <!-- RPLiDAR A1: 360 deg, ~8 kHz sample rate at 10 Hz -> 720 samples -->
+            <samples>720</samples>
+            <resolution>1</resolution>
+            <min_angle>-3.14159</min_angle>
+            <max_angle>3.14159</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.15</min>
+          <max>8.00</max>
+          <resolution>0.01</resolution>
+        </range>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.01</stddev>
+        </noise>
+      </ray>
+      <plugin name="gazebo_ros_laser_controller" filename="libgazebo_ros_laser.so">
+        <topicName>scan</topicName>
+        <frameName>laser_link</frameName>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- ================= SIMULATED BATTERY / TELEMETRY =================
+       There is no Gazebo plugin for "battery voltage", so the simulated
+       robot's battery is faked by robot_hardware/scripts/fake_telemetry.py.
+       That keeps the /robot_telemetry topic populated in sim too. -->
+
+</robot>

@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!--
+  simulation.launch
+  =================
+  Starts Gazebo with the lab world and spawns the robot in it.
+
+      roslaunch robot_gazebo simulation.launch
+      roslaunch robot_gazebo simulation.launch gui:=false      # headless
+
+  AFTER this launch the following topics exist, and they are IDENTICAL to
+  what the real robot publishes:
+
+      /cmd_vel      (subscribed)  geometry_msgs/Twist
+      /odom         (published)   nav_msgs/Odometry
+      /scan         (published)   sensor_msgs/LaserScan
+      /joint_states (published)   sensor_msgs/JointState
+      /tf           odom -> base_footprint -> base_link -> ...
+-->
+<launch>
+  <arg name="world"    default="$(find robot_gazebo)/worlds/lab.world"/>
+  <arg name="gui"      default="true"/>
+  <arg name="paused"   default="false"/>
+  <arg name="headless" default="false"/>
+  <arg name="rviz"     default="false"/>
+
+  <!-- Spawn pose. Keep it clear of walls in lab.world. -->
+  <arg name="x"   default="-3.5"/>
+  <arg name="y"   default="-2.5"/>
+  <arg name="z"   default="0.05"/>
+  <arg name="yaw" default="0.0"/>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name"   value="$(arg world)"/>
+    <arg name="gui"          value="$(arg gui)"/>
+    <arg name="paused"       value="$(arg paused)"/>
+    <arg name="headless"     value="$(arg headless)"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="debug"        value="false"/>
+  </include>
+
+  <!-- URDF (with Gazebo plugins) + robot_state_publisher -->
+  <include file="$(find robot_description)/launch/description.launch">
+    <arg name="use_gazebo" value="true"/>
+  </include>
+
+  <!-- Inject the URDF from the parameter server into Gazebo -->
+  <node name="spawn_robot" pkg="gazebo_ros" type="spawn_model" output="screen"
+        args="-urdf -param robot_description -model rosfleet_robot
+              -x $(arg x) -y $(arg y) -z $(arg z) -Y $(arg yaw)"/>
+
+  <!-- Simulated battery/telemetry so /robot_telemetry exists in sim too -->
+  <node name="fake_telemetry" pkg="robot_hardware" type="fake_telemetry.py" output="screen">
+    <param name="start_voltage"   value="8.20"/>
+    <param name="drain_per_hour"  value="0.90"/>
+  </node>
+
+  <group if="$(arg rviz)">
+    <node name="rviz" pkg="rviz" type="rviz"
+          args="-d $(find robot_navigation)/config/navigation.rviz"/>
+  </group>
+</launch>

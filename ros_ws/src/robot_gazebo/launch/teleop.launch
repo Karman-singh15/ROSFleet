@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!--
+  teleop.launch - drive the robot with the keyboard.
+  Works against Gazebo OR the real robot: both listen on /cmd_vel.
+  This is the first end-to-end test of any new hardware.
+      roslaunch robot_gazebo teleop.launch
+-->
+<launch>
+  <arg name="cmd_vel_topic" default="/cmd_vel"/>
+  <node name="teleop_keyboard" pkg="teleop_twist_keyboard"
+        type="teleop_twist_keyboard.py" output="screen" launch-prefix="xterm -e">
+    <remap from="cmd_vel" to="$(arg cmd_vel_topic)"/>
+    <param name="speed" value="0.20"/>
+    <param name="turn"  value="0.80"/>
+  </node>
+</launch>

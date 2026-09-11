@@ -1,0 +1,30 @@
+# ROS / catkin build output
+ros_ws/build/
+ros_ws/devel/
+ros_ws/install/
+ros_ws/logs/
+*.pyc
+__pycache__/
+
+# PlatformIO
+firmware/**/.pio/
+firmware/**/.vscode/
+
+# Python
+.venv/
+venv/
+*.egg-info/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.env
+.env.local
+
+# Backend
+backend/*.db
+backend/*.sqlite3
+
+# OS
+.DS_Store

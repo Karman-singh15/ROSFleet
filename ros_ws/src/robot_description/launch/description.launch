@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!--
+  description.launch
+  ==================
+  Loads the URDF onto the parameter server and starts robot_state_publisher,
+  which broadcasts the FIXED parts of the TF tree (base_link -> laser_link etc.)
+  from the URDF plus the wheel joint states.
+
+  Included by BOTH simulation.launch and the real-robot bringup.
+-->
+<launch>
+  <arg name="use_gazebo"        default="true"/>
+  <arg name="publish_joint_gui" default="false"/>
+
+  <param name="robot_description"
+         command="$(find xacro)/xacro '$(find robot_description)/urdf/robot.urdf.xacro' use_gazebo:=$(arg use_gazebo)"/>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+    <param name="publish_frequency" value="30.0"/>
+  </node>
+
+  <!-- Only needed when nothing else publishes /joint_states (e.g. viewing
+       the model standalone). Gazebo and the hardware bridge both publish it. -->
+  <group if="$(arg publish_joint_gui)">
+    <node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui"
+          type="joint_state_publisher_gui"/>
+  </group>
+</launch>

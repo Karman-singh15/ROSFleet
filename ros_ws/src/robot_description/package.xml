@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>robot_description</name>
+  <version>0.1.0</version>
+  <description>
+    URDF/Xacro description of the ROSFleet differential-drive robot.
+    This package defines WHAT the robot is: links, joints, dimensions,
+    sensor mounting points and inertial properties. It is shared by
+    Gazebo (simulation), RViz (visualisation), TF (frames) and the
+    navigation stack (footprint).
+  </description>
+  <maintainer email="karmansw15@gmail.com">Karman Singh</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>urdf</exec_depend>
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>rviz</exec_depend>
+</package>
