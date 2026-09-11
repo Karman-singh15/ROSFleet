@@ -40,6 +40,14 @@ echo "=== geometry consistency (URDF / hardware.yaml / firmware config.h) ==="
 $PY scripts/check_geometry_sync.py
 
 echo
+echo "=== launch file references ==="
+$PY scripts/check_launch_refs.py
+
+echo
+echo "=== named destinations reachable on the map ==="
+$PY scripts/check_destinations.py
+
+echo
 echo "=== navigation configuration ==="
 $PY scripts/check_nav_config.py
 
@@ -49,7 +57,7 @@ echo "=== ESP32 firmware logic (compiled natively) ==="
 
 echo
 echo "=== unit tests ==="
-$PY -m pytest ros_ws/src/robot_hardware/test -q
+$PY -m pytest ros_ws/src/robot_hardware/test ros_ws/src/mission_manager/test -q
 
 echo
 echo "All checks passed."

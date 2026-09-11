@@ -1,0 +1,46 @@
+# =====================================================================
+#  Named destinations - the ROS-side copy, for testing WITHOUT the backend.
+#
+#  In the finished system these live in the PostgreSQL `destinations` table
+#  and the backend resolves a name into a pose before calling
+#  /start_mission. This file exists so you can drive the robot to named
+#  places from the command line long before the database exists:
+#
+#      rosservice call /start_mission "{mission_id: 1,
+#        destination_name: 'AI Lab', goal_x: 3.2, goal_y: 2.6,
+#        goal_yaw: 0.0, preempt: false}"
+#
+#  The coordinates below are in the MAP frame of maps/lab.yaml. Get the
+#  numbers for a real building by driving there and running:
+#      rosrun tf tf_echo map base_footprint
+# =====================================================================
+destinations:
+  - name: Reception
+    x: -3.5
+    y: -2.5
+    yaw: 0.0
+    description: Robot home / charging position
+
+  - name: AI Lab
+    x: 3.8
+    y: 3.4
+    yaw: 1.57
+    description: North-east room, clear of the table at (3.0, 2.5)
+
+  - name: Faculty Room
+    x: -3.6
+    y: 2.2
+    yaw: 0.0
+    description: North-west corner
+
+  - name: Robotics Lab
+    x: 3.5
+    y: -2.8
+    yaw: -1.57
+    description: South-east, past the vertical partition
+
+  - name: Corridor Junction
+    x: 0.0
+    y: 0.0
+    yaw: 0.0
+    description: Central waypoint, useful for testing

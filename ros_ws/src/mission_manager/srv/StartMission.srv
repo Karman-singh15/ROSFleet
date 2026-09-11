@@ -1,0 +1,15 @@
+# Ask the robot to drive to a pose in the map frame.
+#
+# The BACKEND resolves a human destination name ("AI Lab") into these
+# coordinates before calling, because names and their coordinates live in
+# the database, not in ROS. ROS only ever deals in poses.
+
+int32   mission_id         # database id, echoed back in MissionStatus
+string  destination_name   # for logs and the dashboard only
+float32 goal_x
+float32 goal_y
+float32 goal_yaw
+bool    preempt            # true = replace any mission already running
+---
+bool    accepted
+string  message

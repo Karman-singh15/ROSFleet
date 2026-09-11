@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>robot_bringup</name>
+  <version>0.1.0</version>
+  <description>
+    Top-level launch files. One command starts the whole robot, in
+    simulation or on real hardware, with everything else unchanged.
+  </description>
+  <maintainer email="karmansw15@gmail.com">Karman Singh</maintainer>
+  <license>MIT</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>robot_description</exec_depend>
+  <exec_depend>robot_gazebo</exec_depend>
+  <exec_depend>robot_hardware</exec_depend>
+  <exec_depend>robot_navigation</exec_depend>
+  <exec_depend>mission_manager</exec_depend>
+  <exec_depend>rosbridge_server</exec_depend>
+</package>

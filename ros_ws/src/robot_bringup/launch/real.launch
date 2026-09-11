@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<!--
+  real.launch - THE WHOLE SYSTEM, on the physical robot.
+
+      roslaunch robot_bringup real.launch transport:=serial
+      roslaunch robot_bringup real.launch transport:=tcp esp32_ip:=192.168.1.50
+
+  Compare this file with sim.launch: the ONLY difference is that
+  robot_gazebo/simulation.launch is replaced by robot_hardware/hardware.launch.
+  Navigation, the mission manager, the bridge and everything above them are
+  byte-for-byte identical. That is the whole point of the architecture.
+
+  Before running this, work through docs/HARDWARE_INTEGRATION.md - in
+  particular do NOT skip the wheel-direction and encoder-sign checks.
+-->
+<launch>
+  <arg name="transport"   default="serial"/>
+  <arg name="serial_port" default="/dev/ttyUSB0"/>
+  <arg name="esp32_ip"    default="192.168.1.50"/>
+  <arg name="lidar"       default="true"/>
+  <arg name="lidar_port"  default="/dev/ttyUSB1"/>
+  <arg name="rviz"        default="true"/>
+  <arg name="map"         default="$(find robot_navigation)/maps/lab.yaml"/>
+
+  <arg name="initial_pose_x" default="0.0"/>
+  <arg name="initial_pose_y" default="0.0"/>
+  <arg name="initial_pose_a" default="0.0"/>
+
+  <!-- Real clock, not simulated -->
+  <param name="/use_sim_time" value="false"/>
+
+  <!-- URDF without the Gazebo plugins: the real hardware publishes the
+       topics those plugins would have faked. -->
+  <include file="$(find robot_description)/launch/description.launch">
+    <arg name="use_gazebo" value="false"/>
+  </include>
+
+  <include file="$(find robot_hardware)/launch/hardware.launch">
+    <arg name="transport"   value="$(arg transport)"/>
+    <arg name="serial_port" value="$(arg serial_port)"/>
+    <arg name="esp32_ip"    value="$(arg esp32_ip)"/>
+    <arg name="lidar"       value="$(arg lidar)"/>
+    <arg name="lidar_port"  value="$(arg lidar_port)"/>
+  </include>
+
+  <include file="$(find robot_navigation)/launch/navigation.launch">
+    <arg name="map"            value="$(arg map)"/>
+    <arg name="sim"            value="false"/>
+    <arg name="rviz"           value="$(arg rviz)"/>
+    <arg name="initial_pose_x" value="$(arg initial_pose_x)"/>
+    <arg name="initial_pose_y" value="$(arg initial_pose_y)"/>
+    <arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
+  </include>
+
+  <include file="$(find mission_manager)/launch/mission_manager.launch">
+    <arg name="require_hardware" value="true"/>
+  </include>
+
+  <include file="$(find robot_bringup)/launch/rosbridge.launch"/>
+</launch>

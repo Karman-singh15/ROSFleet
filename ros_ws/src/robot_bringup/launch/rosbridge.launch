@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<!--
+  rosbridge.launch - exposes ROS over a WebSocket on port 9090.
+
+  The FastAPI backend connects here to read /mission_status, /robot_telemetry
+  and /odom, and to call /start_mission. The Next.js frontend does NOT
+  connect here - it talks only to the backend. Keeping the browser away from
+  raw ROS is what lets you change ROS internals without touching the website.
+-->
+<launch>
+  <arg name="port"    default="9090"/>
+  <arg name="address" default="0.0.0.0"/>
+
+  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+    <arg name="port"    value="$(arg port)"/>
+    <arg name="address" value="$(arg address)"/>
+  </include>
+
+  <!-- Publishes the TF tree as a topic the backend can read cheaply,
+       instead of every client running its own TF listener. -->
+  <node name="tf2_web_republisher" pkg="tf2_web_republisher"
+        type="tf2_web_republisher" respawn="true"/>
+</launch>

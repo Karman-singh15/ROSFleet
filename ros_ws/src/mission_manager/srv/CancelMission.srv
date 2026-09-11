@@ -1,0 +1,6 @@
+# Stop the current mission and bring the robot to a halt.
+int32 mission_id       # 0 = whatever is running
+string reason
+---
+bool cancelled
+string message
