@@ -1,0 +1,16 @@
+# The global costmap = the whole known floor. Used for long-range planning.
+global_costmap:
+  global_frame: map
+  robot_base_frame: base_footprint
+
+  update_frequency: 2.0       # Hz; the static map barely changes
+  publish_frequency: 1.0
+  transform_tolerance: 0.5
+
+  static_map: true
+  rolling_window: false
+
+  plugins:
+    - {name: static_layer,    type: "costmap_2d::StaticLayer"}
+    - {name: obstacle_layer,  type: "costmap_2d::ObstacleLayer"}
+    - {name: inflation_layer, type: "costmap_2d::InflationLayer"}

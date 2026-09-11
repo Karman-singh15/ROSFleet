@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<!--
+  mapping.launch  -  build a map of a NEW building (SLAM).
+
+  You do this ONCE per floor:
+    1. roslaunch robot_gazebo simulation.launch      (or hardware.launch)
+    2. roslaunch robot_navigation mapping.launch
+    3. roslaunch robot_gazebo teleop.launch          and drive slowly,
+       covering every corridor, ideally returning to where you started so
+       gmapping can close the loop
+    4. rosrun map_server map_saver -f ~/floor1
+
+  That produces floor1.pgm + floor1.yaml, which you then upload through the
+  website's Maps page and use with navigation.launch.
+
+  Drive SLOWLY while mapping. Fast turns slip the wheels, odometry lies,
+  and gmapping bends the corridors.
+-->
+<launch>
+  <arg name="sim"  default="true"/>
+  <arg name="rviz" default="true"/>
+
+  <param name="/use_sim_time" value="$(arg sim)"/>
+
+  <node name="slam_gmapping" pkg="gmapping" type="slam_gmapping" output="screen">
+    <rosparam command="load"
+              file="$(find robot_navigation)/config/gmapping_params.yaml"/>
+  </node>
+
+  <group if="$(arg rviz)">
+    <node name="rviz" pkg="rviz" type="rviz"
+          args="-d $(find robot_navigation)/config/navigation.rviz"/>
+  </group>
+</launch>

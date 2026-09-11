@@ -1,0 +1,14 @@
+# Occupancy grid for the simulated lab.
+# Generated from robot_gazebo/worlds/lab.world by
+# scripts/generate_sim_map.py, so simulation has a correct map
+# WITHOUT running SLAM first. The map you use on the real robot
+# comes from gmapping + map_saver instead.
+image: lab.pgm
+resolution: 0.050
+# [x, y, yaw] of the BOTTOM-LEFT pixel, in the map frame.
+origin: [-5.600, -4.600, 0.0]
+negate: 0
+# Darker than occupied_thresh*255 is an obstacle; lighter than
+# free_thresh*255 is free; anything between is unknown.
+occupied_thresh: 0.65
+free_thresh: 0.196

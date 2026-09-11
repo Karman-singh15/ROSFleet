@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>robot_navigation</name>
+  <version>0.1.0</version>
+  <description>
+    Autonomous navigation: mapping (gmapping), localisation (AMCL) and
+    path planning + obstacle avoidance (move_base). Identical whether the
+    robot underneath is Gazebo or the real ESP32 chassis.
+  </description>
+  <maintainer email="karmansw15@gmail.com">Karman Singh</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>move_base</exec_depend>
+  <exec_depend>amcl</exec_depend>
+  <exec_depend>map_server</exec_depend>
+  <exec_depend>gmapping</exec_depend>
+  <exec_depend>dwa_local_planner</exec_depend>
+  <exec_depend>global_planner</exec_depend>
+  <exec_depend>costmap_2d</exec_depend>
+  <exec_depend>robot_description</exec_depend>
+</package>

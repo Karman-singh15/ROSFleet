@@ -1,0 +1,52 @@
+# =====================================================================
+#  DWA local planner - turns the global path into /cmd_vel.
+#
+#  These limits MUST NOT exceed what the robot can physically do. If you
+#  tell DWA the robot can do 1.0 m/s and the motors top out at 0.35 m/s,
+#  every plan it makes is a lie and the robot lags behind its own path,
+#  overshoots corners, then oscillates.
+# =====================================================================
+DWAPlannerROS:
+  # --- velocity limits (match hardware.yaml / config.h) ---
+  max_vel_x: 0.30
+  min_vel_x: -0.10            # a little reverse for recovery
+  max_vel_y: 0.0              # differential drive cannot strafe
+  min_vel_y: 0.0
+
+  max_vel_trans: 0.30
+  min_vel_trans: 0.06         # below this a cheap gearmotor stalls
+  max_vel_theta: 1.20
+  min_vel_theta: 0.30
+
+  # --- acceleration limits ---
+  # A light robot with plastic gearboxes cannot change speed instantly;
+  # asking it to makes the wheels slip, which corrupts odometry.
+  acc_lim_x: 0.6
+  acc_lim_y: 0.0
+  acc_lim_theta: 2.0
+
+  # --- goal tolerance ---
+  xy_goal_tolerance: 0.15     # m; tighter than this and it hunts forever
+  yaw_goal_tolerance: 0.20    # rad, about 11 degrees
+  latch_xy_goal_tolerance: true   # once inside, just fix the heading
+
+  # --- trajectory sampling ---
+  sim_time: 2.0               # s of lookahead per candidate trajectory
+  sim_granularity: 0.025
+  vx_samples: 12
+  vy_samples: 1
+  vth_samples: 20
+  controller_frequency: 5.0   # Hz; matches the local costmap update rate
+
+  # --- scoring weights (the robot's "personality") ---
+  path_distance_bias: 34.0    # raise -> hugs the global path more tightly
+  goal_distance_bias: 20.0    # raise -> beelines for the goal
+  occdist_scale: 0.05         # raise -> gives obstacles a wider berth
+  forward_point_distance: 0.20
+  stop_time_buffer: 0.3
+  scaling_speed: 0.25
+  max_scaling_factor: 0.2
+
+  # --- oscillation ---
+  oscillation_reset_dist: 0.05
+  prune_plan: true

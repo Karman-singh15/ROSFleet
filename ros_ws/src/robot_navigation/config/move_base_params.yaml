@@ -1,0 +1,37 @@
+# =====================================================================
+#  move_base - the navigation state machine.
+#  Publishes /cmd_vel; that is its ONLY output, which is precisely why
+#  Gazebo and the real robot are interchangeable beneath it.
+# =====================================================================
+base_global_planner: global_planner/GlobalPlanner
+base_local_planner: dwa_local_planner/DWAPlannerROS
+
+controller_frequency: 5.0     # Hz, how often /cmd_vel is recomputed
+planner_frequency: 0.5        # Hz, how often the global path is replanned
+
+controller_patience: 5.0      # s stuck before trying a recovery
+planner_patience: 5.0
+max_planning_retries: 3       # then fail the goal instead of retrying forever
+
+# Recovery behaviours, in order. Clearing the costmap first is cheap and
+# fixes the common case (a stale obstacle from a bad scan). Rotating is a
+# last resort for a small robot that could hit something it cannot see.
+recovery_behavior_enabled: true
+clearing_rotation_allowed: true
+conservative_reset_dist: 3.0
+
+shutdown_costmaps: false
+oscillation_timeout: 10.0     # s of no progress before declaring failure
+oscillation_distance: 0.15
+
+GlobalPlanner:
+  allow_unknown: false        # never plan through unmapped space indoors
+  use_dijkstra: true
+  use_quadratic: true
+  use_grid_path: false
+  old_navfn_behavior: false
+  cost_factor: 3.0
+  neutral_cost: 66
+  lethal_cost: 253
+  publish_potential: true
+  default_tolerance: 0.20     # m; accept a goal this far from the request

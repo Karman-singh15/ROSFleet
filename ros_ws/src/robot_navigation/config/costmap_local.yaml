@@ -1,0 +1,19 @@
+# The local costmap = a small window that travels with the robot. This is
+# what actually keeps it from hitting the chair someone just moved.
+local_costmap:
+  global_frame: odom          # odom, not map: locally smooth and jump-free
+  robot_base_frame: base_footprint
+
+  update_frequency: 5.0       # Hz; must keep up with things that move
+  publish_frequency: 2.0
+  transform_tolerance: 0.5
+
+  static_map: false
+  rolling_window: true
+  width: 3.0                  # m
+  height: 3.0
+  resolution: 0.05
+
+  plugins:
+    - {name: obstacle_layer,  type: "costmap_2d::ObstacleLayer"}
+    - {name: inflation_layer, type: "costmap_2d::InflationLayer"}

@@ -1,0 +1,58 @@
+# =====================================================================
+#  AMCL - particle filter localisation. It answers "where on the map am I?"
+#  by matching the live /scan against the stored map, and publishes the
+#  map -> odom correction that cancels accumulated odometry drift.
+#
+#  The odom_alpha values describe how much your ODOMETRY LIES. Cheap plastic
+#  gearboxes on a smooth floor slip a lot, so these are set higher than the
+#  ROS defaults. If AMCL keeps snapping the robot to the wrong place,
+#  raising these usually helps more than adding particles.
+# =====================================================================
+
+# --- particle filter ---
+min_particles: 300
+max_particles: 2500
+kld_err: 0.05
+kld_z: 0.99
+update_min_d: 0.15            # m of travel before a filter update
+update_min_a: 0.20            # rad of rotation before a filter update
+resample_interval: 1
+transform_tolerance: 0.5
+recovery_alpha_slow: 0.001    # enables recovery from being kidnapped
+recovery_alpha_fast: 0.1
+gui_publish_rate: 10.0
+
+# --- laser model ---
+laser_model_type: likelihood_field
+laser_min_range: 0.15
+laser_max_range: 8.0
+laser_max_beams: 60           # subsample; 720 beams is wasted CPU here
+laser_z_hit: 0.5
+laser_z_short: 0.05
+laser_z_max: 0.05
+laser_z_rand: 0.5
+laser_sigma_hit: 0.2
+laser_likelihood_max_dist: 2.0
+
+# --- motion model ---
+odom_model_type: diff-corrected
+odom_alpha1: 0.2              # rotation noise from rotation
+odom_alpha2: 0.2              # rotation noise from translation
+odom_alpha3: 0.2              # translation noise from translation
+odom_alpha4: 0.2              # translation noise from rotation
+
+# --- frames (must match the URDF and the hardware bridge) ---
+odom_frame_id: odom
+base_frame_id: base_footprint
+global_frame_id: map
+tf_broadcast: true
+
+# --- initial pose ---
+# Where the robot believes it starts. The website's "set initial pose"
+# action republishes this at runtime via /initialpose.
+initial_pose_x: 0.0
+initial_pose_y: 0.0
+initial_pose_a: 0.0
+initial_cov_xx: 0.25
+initial_cov_yy: 0.25
+initial_cov_aa: 0.07

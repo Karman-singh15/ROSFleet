@@ -1,0 +1,48 @@
+# =====================================================================
+#  gmapping - builds the map in the first place (SLAM).
+#  You run this ONCE per building, drive the robot around, then save the
+#  result with map_saver. After that you use AMCL against the saved map.
+# =====================================================================
+base_frame: base_footprint
+odom_frame: odom
+map_frame: map
+
+map_update_interval: 2.0      # s
+maxUrange: 6.0                # m; usable laser range for mapping
+maxRange: 8.0                 # m; the sensor's true maximum
+
+# Scan matching
+sigma: 0.05
+kernelSize: 1
+lstep: 0.05
+astep: 0.05
+iterations: 5
+lsigma: 0.075
+ogain: 3.0
+lskip: 0
+minimumScore: 50.0            # reject bad matches in featureless corridors
+
+# Motion model noise - again, cheap gearboxes slip
+srr: 0.1
+srt: 0.2
+str: 0.1
+stt: 0.2
+
+# Update thresholds: how far to travel before processing a scan
+linearUpdate: 0.2             # m
+angularUpdate: 0.2            # rad
+temporalUpdate: 1.0           # s
+resampleThreshold: 0.5
+particles: 50
+
+# Initial map size; it grows as needed
+xmin: -10.0
+ymin: -10.0
+xmax: 10.0
+ymax: 10.0
+delta: 0.05                   # m per pixel - matches the saved map resolution
+
+llsamplerange: 0.01
+llsamplestep: 0.01
+lasamplerange: 0.005
+lasamplestep: 0.005

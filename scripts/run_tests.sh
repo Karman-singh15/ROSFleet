@@ -40,6 +40,10 @@ echo "=== geometry consistency (URDF / hardware.yaml / firmware config.h) ==="
 $PY scripts/check_geometry_sync.py
 
 echo
+echo "=== navigation configuration ==="
+$PY scripts/check_nav_config.py
+
+echo
 echo "=== ESP32 firmware logic (compiled natively) ==="
 ./scripts/test_firmware.sh
 
