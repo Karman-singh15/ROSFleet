@@ -28,3 +28,7 @@ backend/*.sqlite3
 
 # OS
 .DS_Store
+
+# Backend runtime
+backend/storage/
+backend/rosfleet.db

@@ -10,6 +10,9 @@ python3 -m venv .venv
 ./.venv/bin/pip install --quiet --upgrade pip
 ./.venv/bin/pip install --quiet xacro urdf-parser-py pytest pyserial pyyaml
 
+echo "Installing backend dependencies ..."
+./.venv/bin/pip install --quiet -r backend/requirements.txt
+
 echo
 echo "Done. Run the checks with:"
 echo "    ./scripts/run_tests.sh"

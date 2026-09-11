@@ -60,4 +60,12 @@ echo "=== unit tests ==="
 $PY -m pytest ros_ws/src/robot_hardware/test ros_ws/src/mission_manager/test -q
 
 echo
+echo "=== backend API tests ==="
+if [ -d backend/tests ]; then
+  PYTHONPATH=backend $PY -m pytest backend/tests -q
+else
+  echo "skipped (backend not present)"
+fi
+
+echo
 echo "All checks passed."
