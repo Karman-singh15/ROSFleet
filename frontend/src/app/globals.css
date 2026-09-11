@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+/*
+  A dark control-room palette. Robot dashboards are looked at for long
+  stretches in rooms with the lights down, and status colours read more
+  clearly against a dark ground.
+*/
+@theme {
+  --color-surface: #0f1115;
+  --color-panel: #171a21;
+  --color-panel-2: #1e222b;
+  --color-edge: #2a2f3a;
+  --color-ink: #e8eaed;
+  --color-ink-dim: #9aa3b2;
+
+  --color-ok: #34d399;
+  --color-busy: #38bdf8;
+  --color-warn: #fbbf24;
+  --color-bad: #f87171;
+  --color-idle: #64748b;
+}
+
+html,
+body {
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+/* Tabular numerals stop live telemetry from jittering as digits change. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}

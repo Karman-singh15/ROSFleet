@@ -65,7 +65,21 @@ rosservice call /start_mission "{mission_id: 1, destination_name: 'AI Lab',
   goal_x: 3.8, goal_y: 3.4, goal_yaw: 1.57, preempt: false}"
 ```
 
-### 3. The real robot
+### 3. The web application
+
+```bash
+# Terminal 1 - API
+cd backend && pip install -r requirements.txt
+python3 seed.py                 # creates RB001, the lab map and destinations
+uvicorn app.main:app --reload --port 8000
+
+# Terminal 2 - website
+cd frontend && npm install && npm run dev
+```
+
+Open http://localhost:3000. The API docs are at http://localhost:8000/docs.
+
+### 4. The real robot
 
 ```bash
 roslaunch robot_bringup real.launch transport:=serial
@@ -89,8 +103,8 @@ rosfleet/
 │   └── robot_bringup/       top-level launch files
 │
 ├── firmware/esp32_robot/    ESP32: PWM, encoders, PID, protocol
-├── backend/                 FastAPI + PostgreSQL        (not started)
-├── frontend/                Next.js dashboard           (not started)
+├── backend/                 FastAPI + PostgreSQL
+├── frontend/                Next.js dashboard
 │
 ├── docker/                  ROS Noetic + Gazebo + noVNC image
 ├── maps/                    occupancy grids
@@ -118,9 +132,11 @@ Nothing else cares which.
 
 ## Current state
 
-Phases 1–7 are implemented and covered by automated checks; the Docker
-environment is written but not yet built; backend and frontend are not
-started. Nothing has yet run inside a real ROS master or on physical
+Phases 1–10 are implemented and covered by automated checks: robot model,
+simulation, hardware abstraction layer, ESP32 firmware, navigation, missions,
+backend and frontend. The backend and website have been run together and
+driven through a browser. The Docker ROS environment is written but not yet
+built, and nothing has yet run inside a real ROS master or on physical
 hardware.
 
 See [docs/PROGRESS.md](docs/PROGRESS.md) for the detailed status, the

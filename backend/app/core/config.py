@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     # Where uploaded map files are stored
     map_storage_dir: str = "./storage/maps"
 
+    # Origins the browser may call the API from. Override with the
+    # CORS_ORIGINS environment variable as a JSON list when the frontend runs
+    # anywhere other than port 3000:
+    #     CORS_ORIGINS='["http://localhost:3100"]'
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
 
