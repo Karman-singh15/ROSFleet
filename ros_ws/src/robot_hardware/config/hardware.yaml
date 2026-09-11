@@ -1,0 +1,58 @@
+# =====================================================================
+#  hardware.yaml - everything that must match YOUR physical robot.
+#
+#  These are the numbers you will actually tune during hardware bringup.
+#  docs/HARDWARE_INTEGRATION.md walks through measuring each one.
+# =====================================================================
+
+# --- how the Mac reaches the ESP32 -----------------------------------
+# serial   : USB cable. Use this first - fewer variables while debugging.
+# tcp      : Wi-Fi. Use once serial works end to end.
+# loopback : no hardware at all; a simulated ESP32 inside the bridge.
+transport: loopback
+
+serial_port: /dev/ttyUSB0     # macOS: /dev/tty.usbserial-XXXX or /dev/tty.SLAB_USBtoUART
+baud_rate: 115200
+esp32_ip: 192.168.1.50
+esp32_port: 9000
+
+# --- drivetrain geometry ---------------------------------------------
+# MEASURE THESE. Guessing here is the #1 cause of "the robot turns too far".
+wheel_radius: 0.0325          # m, measure the wheel and halve it
+wheel_separation: 0.160       # m, between the two drive wheel contact points
+
+# Encoder counts per FULL WHEEL revolution, after gearbox.
+#   ticks_per_rev = encoder_ppr * gear_ratio * edges_counted
+#   e.g. 13 PPR magnetic encoder * 30:1 gearbox * 2 edges = 780
+ticks_per_rev: 780.0
+
+# Set true if a wheel reports negative counts while driving forward.
+# Cheaper than re-soldering the encoder wires.
+invert_left_encoder: false
+invert_right_encoder: false
+
+# --- safety limits ----------------------------------------------------
+# The bridge clamps to these, and the firmware clamps again independently.
+max_linear_velocity: 0.35     # m/s
+max_angular_velocity: 1.50    # rad/s
+
+cmd_rate: 20.0                # Hz, how often a setpoint is sent to the ESP32
+cmd_timeout: 0.5              # s without /cmd_vel before commanding a stop
+link_timeout: 1.0             # s without any ESP32 message before "disconnected"
+
+# --- battery ----------------------------------------------------------
+# 2S Li-ion: 8.4 V full, 6.6 V empty. For a 6xAA pack use 9.0 / 6.0.
+battery_full_voltage: 8.4
+battery_empty_voltage: 6.6
+battery_warn_percent: 20.0
+
+# --- odometry trust ---------------------------------------------------
+# Diagonal of the 6x6 covariance: [x, y, z, roll, pitch, yaw].
+# Huge values on the axes a differential drive cannot measure tell AMCL
+# to ignore them entirely.
+pose_covariance:  [0.02, 0.02, 1000000.0, 1000000.0, 1000000.0, 0.08]
+twist_covariance: [0.02, 0.02, 1000000.0, 1000000.0, 1000000.0, 0.08]
+
+publish_tf: true
+odom_frame: odom
+base_frame: base_footprint

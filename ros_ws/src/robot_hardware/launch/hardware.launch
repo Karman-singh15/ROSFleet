@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!--
+  hardware.launch - bring up the REAL robot's low-level interface.
+
+      roslaunch robot_hardware hardware.launch transport:=serial
+      roslaunch robot_hardware hardware.launch transport:=tcp esp32_ip:=192.168.1.50
+      roslaunch robot_hardware hardware.launch transport:=loopback   (no hardware)
+
+  Produces exactly the same topics Gazebo produces:
+      /odom  /joint_states  /tf(odom->base_footprint)  plus /robot_telemetry
+-->
+<launch>
+  <arg name="transport"   default="serial"/>
+  <arg name="serial_port" default="/dev/ttyUSB0"/>
+  <arg name="esp32_ip"    default="192.168.1.50"/>
+  <arg name="lidar"       default="true"/>
+  <arg name="lidar_port"  default="/dev/ttyUSB1"/>
+
+  <node name="hardware_bridge" pkg="robot_hardware" type="hardware_bridge.py"
+        output="screen" respawn="true" respawn_delay="3">
+    <rosparam command="load" file="$(find robot_hardware)/config/hardware.yaml"/>
+    <!-- Command-line args win over the YAML file -->
+    <param name="transport"   value="$(arg transport)"/>
+    <param name="serial_port" value="$(arg serial_port)"/>
+    <param name="esp32_ip"    value="$(arg esp32_ip)"/>
+  </node>
+
+  <!-- Real LiDAR driver. Publishes /scan in frame laser_link, which is the
+       same topic+frame the Gazebo laser plugin publishes. -->
+  <group if="$(arg lidar)">
+    <node name="rplidar" pkg="rplidar_ros" type="rplidarNode" output="screen">
+      <param name="serial_port"     value="$(arg lidar_port)"/>
+      <param name="serial_baudrate" value="115200"/>
+      <param name="frame_id"        value="laser_link"/>
+      <param name="inverted"        value="false"/>
+      <param name="angle_compensate" value="true"/>
+    </node>
+  </group>
+</launch>
