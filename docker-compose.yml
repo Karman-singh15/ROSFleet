@@ -1,0 +1,80 @@
+# =====================================================================
+#  ROSFleet development environment
+#
+#      docker compose up -d ros      # start the robot's computer
+#      open http://localhost:6080    # Gazebo / RViz desktop in a browser
+#      docker compose exec ros bash  # a shell inside ROS
+#
+#  The ros_ws directory is BIND MOUNTED, so editing a file in your Mac
+#  editor changes it instantly inside the container. No rebuild, no copy.
+# =====================================================================
+services:
+
+  ros:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile
+    image: rosfleet/ros-noetic:latest
+    container_name: rosfleet-ros
+    hostname: rosfleet-ros
+
+    ports:
+      - "6080:6080"     # noVNC  -> the Gazebo/RViz desktop in your browser
+      - "5901:5901"     # raw VNC, if you prefer a native VNC client
+      - "9090:9090"     # rosbridge websocket -> the backend connects here
+      - "11311:11311"   # ROS master
+
+    volumes:
+      # Live-edit the ROS workspace from macOS.
+      - ./ros_ws:/root/rosfleet_ws:cached
+      - ./maps:/root/maps:cached
+      # Keep build output in a named volume: catkin writes thousands of
+      # small files, and doing that across the macOS bind mount is slow
+      # enough to be painful.
+      - ros_build:/root/rosfleet_ws/build
+      - ros_devel:/root/rosfleet_ws/devel
+
+    environment:
+      - ROS_MASTER_URI=http://localhost:11311
+      - ROS_HOSTNAME=localhost
+      - VNC_RESOLUTION=1600x900
+      - LIBGL_ALWAYS_SOFTWARE=1
+
+    # Gazebo's physics engine uses shared memory; the 64 MB Docker default
+    # makes it crash on startup.
+    shm_size: "2gb"
+
+    # Needed for the USB serial adapter when you connect the real ESP32.
+    # Uncomment once the hardware exists; leaving it on with no device
+    # attached prevents the container from starting.
+    # devices:
+    #   - "/dev/tty.usbserial-0001:/dev/ttyUSB0"
+
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: rosfleet-db
+    environment:
+      POSTGRES_USER: rosfleet
+      POSTGRES_PASSWORD: rosfleet
+      POSTGRES_DB: rosfleet
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      # The backend must not start migrating against a database that is
+      # still initialising.
+      test: ["CMD-SHELL", "pg_isready -U rosfleet"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  ros_build:
+  ros_devel:
+  db_data:
