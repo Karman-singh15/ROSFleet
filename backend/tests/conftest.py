@@ -9,6 +9,16 @@ import os
 import sys
 
 import pytest
+
+# Disable the ROS integration BEFORE importing the app.
+#
+# app.main builds its ROS client at import time and connects during the
+# lifespan, so with roslibpy actually installed every TestClient would open a
+# real websocket to rosbridge, block on the connect timeout, and leave a
+# background reactor thread running. The suite went from 0.6 s to hanging the
+# moment the dependency was installed. Tests inject FakeRosClient through the
+# get_ros dependency instead.
+os.environ["ROS_ENABLED"] = "false"
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker

@@ -11,7 +11,7 @@ psycopg2-binary==2.9.10      # PostgreSQL driver (production)
 # SQLite needs no driver - it is built into Python, and is what the tests use
 
 # ROS connection
-roslibpy==1.8.1              # rosbridge websocket client
+roslibpy==2.1.0              # rosbridge websocket client
 
 # Utilities
 python-multipart==0.0.20     # map file uploads

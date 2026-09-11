@@ -12,6 +12,23 @@ from app.ros.ros_client import SERVICE_CANCEL_MISSION, SERVICE_START_MISSION
 
 
 # ------------------------------------------------------------------ health
+def test_the_suite_never_opens_a_real_ros_connection():
+    """Guard against a very slow regression.
+
+    app.main builds its ROS client at import time. If the tests ever run with
+    ros_enabled true, every TestClient opens a real websocket to rosbridge and
+    blocks on the connect timeout - the suite went from 0.6 s to hanging the
+    day roslibpy was actually installed. conftest sets ROS_ENABLED=false
+    before importing the app; this asserts nobody has undone that.
+    """
+    from app.core.config import get_settings
+    from app.main import ros_client
+    from app.ros.ros_client import NullRosClient
+
+    assert get_settings().ros_enabled is False
+    assert isinstance(ros_client, NullRosClient)
+
+
 def test_health(client):
     assert client.get("/api/health").json()["status"] == "ok"
 
