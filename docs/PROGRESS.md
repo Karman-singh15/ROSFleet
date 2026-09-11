@@ -24,16 +24,18 @@ comes next. **Every completed piece of work gets an entry here.**
 | 7 | Mission manager | ✅ Done | 27 tests incl. the cancel/arrive race |
 | 8 | Docker environment | ⚠️ Written, unverified | Docker not installed on this machine |
 | 9 | Backend (FastAPI + PostgreSQL) | ✅ Done | 55 tests + live uvicorn smoke test |
-| 10 | Frontend (Next.js) | ⬜ Not started | |
-| 11 | Analytics + digital twin | ⬜ Not started | |
+| 10 | Frontend (Next.js) | ✅ Done | builds clean; driven through a real browser |
+| 11 | Analytics | ✅ Done | success rate, utilisation, failure causes |
+| 11b | Digital twin (live 3D) | ⬜ Not started | optional stretch goal |
 | 12 | Physical robot bringup | ⬜ Blocked | waiting on parts |
 
 **Verification status:** everything marked ✅ has automated checks that run on
-macOS via `./scripts/run_tests.sh` — **119 Python tests, 46 native firmware
-checks and 6 structural validators**. The backend has additionally been run
-for real under uvicorn and driven with HTTP requests. Nothing has yet been
-executed inside a ROS master or on physical hardware — that is the honest
-state of the project, and both gaps are tracked below as open risks.
+macOS via `./scripts/run_tests.sh` — **132 Python tests, 46 native firmware
+checks and 6 structural validators**, in about three seconds. The backend and
+website have additionally been run together and driven through a real
+browser. Nothing has yet been executed inside a ROS master or on physical
+hardware — that is the honest state of the project, and both gaps are tracked
+below as open risks.
 
 ---
 
@@ -340,6 +342,58 @@ mutation is now caught.
 
 ---
 
+### 2026-09-11 — Phase 10: frontend
+
+**Commit** `50638fd` *Add the Next.js dashboard and serve maps as PNG*
+
+**Built**
+
+- Next.js 15 App Router + TypeScript + Tailwind v4, seven routes: dashboard,
+  robots, robot detail, maps, missions, mission detail, analytics.
+- `MapView` — click the floor plan to place a named destination.
+- `useLive` — WebSocket updates merged into existing rows, polling beneath.
+- `pgm_to_png` (backend) — browsers cannot render PGM, so `/api/maps/{id}/image`
+  converts on the fly; a minimal encoder rather than a Pillow dependency.
+
+**Verified** — typecheck and production build clean. Backend and frontend run
+together and driven through a real browser: every page renders, the map image
+and all five seeded destinations appear in the right places, click-to-place
+created a destination end to end, and the console is free of application
+errors. 13 new backend tests decode the generated PNG with a real decoder and
+compare every pixel, rather than only checking the header.
+
+**Two real bugs were found this way, both invisible to the build.**
+
+1. **Every Tailwind colour class was compiling to nothing.** The code used
+   `bg-[--color-panel]`, which is Tailwind v3 syntax; v4 generates utilities
+   from `@theme` instead, so the correct form is `bg-panel`. The build
+   succeeded, the typecheck passed, and the page still *looked* roughly right
+   because `globals.css` sets the body colours directly — only a screenshot
+   showed the destination labels missing their background chips. Confirmed by
+   grepping the compiled CSS: none of the 164 class names existed. Fixed
+   across 11 files.
+
+2. **A 5 px offset between where the map was clicked and where the marker
+   appeared.** Checked numerically against the map metadata instead of by
+   eye, which traced it to the screenshot tooling (browser viewport 1470 px,
+   capture 1456 px, a 1.0096 scale) rather than to the application. The
+   coordinate conversion is exact. Worth recording precisely because "it
+   looks about right" would have left a real doubt.
+
+Also found: the frontend reported "Cannot reach the backend" when the real
+cause was a CORS rejection. `fetch` rejects identically for both and the
+browser deliberately hides which, so the message now names both causes.
+
+**Notes**
+
+- The frontend contains no ROS concepts at all — no `roslibpy`, no
+  `/cmd_vel`, no topic names. `src/lib/api.ts` is the only file that touches
+  the network.
+- Live updates are merged into existing rows rather than triggering a
+  refetch, so numbers move the instant the robot does.
+
+---
+
 ## Decisions
 
 Choices that were not obvious, recorded so they do not get re-argued.
@@ -365,6 +419,9 @@ Choices that were not obvious, recorded so they do not get re-argued.
 | 17 | Missions copy their destination's pose | A renamed or deleted destination must not rewrite finished history | Referencing the destination only |
 | 18 | Analytics computed on demand | At this scale the query is instant; a stale cache that disagrees with the mission list confuses users far more | Pre-aggregated summary tables |
 | 19 | `NullRosClient` / `FakeRosClient` behind one interface | The entire backend and frontend are developable with no ROS and no robot | Mocking roslibpy per test |
+| 20 | Convert maps to PNG on request, not at upload | A map regenerated on disk is served fresh with no re-upload | Converting once at upload time |
+| 21 | WebSocket **and** polling on every live page | A dashboard that silently freezes when a socket drops is worse than one three seconds stale | WebSocket alone |
+| 22 | Show the backend's error text verbatim in the UI | "robot is already running mission 12" is actionable; "something went wrong" is not | Generic error toasts |
 
 ---
 
@@ -374,6 +431,7 @@ Choices that were not obvious, recorded so they do not get re-argued.
 |---|---|---|
 | **Nothing has run in real ROS yet** | Unknown integration issues | Docker build is the next task |
 | **Firmware never compiled by PlatformIO** | Small errors likely on first flash | Logic is tested natively; expect an hour of fixes |
+| Backend/frontend never run against real ROS | The rosbridge message shapes are assumed, not observed | `FakeRosClient` uses the documented shapes; verify on first connection |
 | Gazebo performance under software rendering on M4 | Slow simulation | Headless (`gui:=false`) + RViz only if needed |
 | LiDAR budget (₹7–9k) | No LiDAR means no real autonomous navigation | Documented fallback: sim for navigation, real robot in teleop |
 | Campus Wi-Fi client isolation | ESP32 unreachable over Wi-Fi | Documented: phone hotspot or travel router |
@@ -395,10 +453,11 @@ In order.
 4. **Connect the backend to the running ROS.** `docker compose up -d`, then
    `POST /api/missions` and watch the robot move in Gazebo. This is the first
    moment the whole stack is proven together.
-5. **Phase 10 — frontend.** Dashboard, robot detail, map view with
-   click-to-place destinations, mission deployment, live status.
-6. **Phase 12 — hardware.** Follow `docs/HARDWARE_INTEGRATION.md` from
-   Step 1 the day the parts arrive.
+5. **Phase 12 — hardware.** Follow `docs/HARDWARE_INTEGRATION.md` from
+   Step 1 the day the parts arrive. Steps 1–7 need only the ESP32, the
+   motors and a battery; the LiDAR is not needed until Step 10.
+6. *(Optional)* **Digital twin.** Mirror the live robot pose into a 3D view
+   on the website. Only worth doing once everything above works.
 
 ---
 
@@ -416,9 +475,12 @@ What `./scripts/run_tests.sh` actually checks, and what each protects.
 | Navigation config sanity | 6 cross-checks | planner outrunning the drivetrain, sealed doorways |
 | Firmware native checks | 46 | protocol parsing, kinematics, PID guards |
 | ROS-side unit tests | 64 | odometry, bridge behaviour, mission state machine |
-| Backend API tests | 55 | endpoints, ROS sync, analytics arithmetic |
+| Backend API tests | 68 | endpoints, ROS sync, analytics arithmetic, PNG encoding |
 
-**Total: 119 Python tests + 46 native checks + 6 structural validators.**
+**Total: 132 Python tests + 46 native checks + 6 structural validators.**
+
+The frontend is covered by `npm run build` and `npx tsc --noEmit`, plus the
+manual browser pass recorded above.
 
 All of it runs on macOS in about three seconds with no ROS and no robot:
 
