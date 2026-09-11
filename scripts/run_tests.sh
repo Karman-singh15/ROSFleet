@@ -4,12 +4,22 @@
 set -e
 cd "$(dirname "$0")/.."
 
+# Prefer the project venv (created by scripts/setup_dev.sh) so the checks
+# have xacro/pytest available without touching the system Python.
+if [ -x .venv/bin/python ]; then
+  PY=.venv/bin/python
+else
+  PY=python3
+  echo "note: .venv not found - run ./scripts/setup_dev.sh first if checks fail"
+  echo
+fi
+
 echo "=== URDF model ==="
-python3 scripts/validate_urdf.py
+$PY scripts/validate_urdf.py
 
 echo
 echo "=== XML well-formedness (launch / xacro / world) ==="
-python3 - <<'PY'
+$PY - <<'PY'
 import glob, sys, xml.dom.minidom
 bad = 0
 pats = ["ros_ws/src/**/*.xacro", "ros_ws/src/**/*.launch",
@@ -26,8 +36,16 @@ sys.exit(1 if bad else 0)
 PY
 
 echo
+echo "=== geometry consistency (URDF / hardware.yaml / firmware config.h) ==="
+$PY scripts/check_geometry_sync.py
+
+echo
+echo "=== ESP32 firmware logic (compiled natively) ==="
+./scripts/test_firmware.sh
+
+echo
 echo "=== unit tests ==="
-python3 -m pytest ros_ws/src/robot_hardware/test -q
+$PY -m pytest ros_ws/src/robot_hardware/test -q
 
 echo
 echo "All checks passed."
