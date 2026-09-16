@@ -14,6 +14,18 @@ local_costmap:
   height: 3.0
   resolution: 0.05
 
+  # Override costmap_common's track_unknown_space, which is right for the
+  # global costmap and wrong here. This costmap has no static_layer, so
+  # every cell starts as NO_INFORMATION and only the laser can clear it -
+  # and the laser can never raytrace the cells under the robot's own
+  # footprint. footprintCost() then returns -1 forever, so DWA rejects
+  # every trajectory and rotate_recovery refuses to turn:
+  #   "Rotate recovery can't rotate in place ... Cost: -1.00"
+  # Unknown means "nothing seen there" locally; the walls are the global
+  # costmap's job, and GlobalPlanner keeps allow_unknown: false.
+  obstacle_layer:
+    track_unknown_space: false
+
   plugins:
     - {name: obstacle_layer,  type: "costmap_2d::ObstacleLayer"}
     - {name: inflation_layer, type: "costmap_2d::InflationLayer"}

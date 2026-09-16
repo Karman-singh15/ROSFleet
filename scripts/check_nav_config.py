@@ -144,6 +144,23 @@ def main():
                         "get marked but never cleared, so the costmap fills with "
                         "ghosts" % (raytrace_range, obstacle_range))
 
+    # --- 7. the local costmap must not track unknown space -------------
+    # costmap_common.yaml is loaded into BOTH namespaces, then the
+    # per-costmap file is loaded over it, so the local value is whichever
+    # costmap_local.yaml sets - falling back to common's.
+    local_plugins = [p["name"] for p in local.get("plugins", [])]
+    local_unknown = local.get("obstacle_layer", {}).get(
+        "track_unknown_space", common["obstacle_layer"]["track_unknown_space"])
+    print("local costmap unknown space")
+    print("  track_unknown_space %s   static_layer %s"
+          % (local_unknown, "static_layer" in local_plugins))
+    if local_unknown and "static_layer" not in local_plugins:
+        problems.append("local costmap has track_unknown_space: true but no "
+                        "static_layer, so every cell starts unknown and the "
+                        "laser can never clear the robot's own footprint; "
+                        "footprintCost() returns -1, DWA rejects every "
+                        "trajectory and rotate_recovery refuses to turn")
+
     print()
     for warning in warnings:
         print("WARN  %s" % warning)
