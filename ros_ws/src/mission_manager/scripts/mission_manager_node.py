@@ -75,6 +75,12 @@ class MissionManagerNode(object):
         self.goal_timeout = rospy.get_param("~goal_timeout", 300.0)   # s
         self.require_hardware = rospy.get_param("~require_hardware", True)
         self.server_wait = rospy.get_param("~move_base_wait", 30.0)
+        # The GLOBAL planner's plan, not DWAPlannerROS/global_plan: the
+        # local planner republishes only the slice of the route inside the
+        # local costmap window (~1.6 m), which pins progress at 0%.
+        # Parameterised because the topic name follows base_global_planner.
+        self.plan_topic = rospy.get_param(
+            "~global_plan_topic", "move_base/GlobalPlanner/plan")
 
         self.tracker = MissionTracker(
             arrival_tolerance=rospy.get_param("~arrival_tolerance", 0.15))
@@ -89,7 +95,7 @@ class MissionManagerNode(object):
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
         rospy.Subscriber("odom", Odometry, self.on_odom, queue_size=5)
-        rospy.Subscriber("move_base/DWAPlannerROS/global_plan", Path,
+        rospy.Subscriber(self.plan_topic, Path,
                          self.on_plan, queue_size=1)
         rospy.Subscriber("hardware_connected", Bool, self.on_hardware,
                          queue_size=1)
