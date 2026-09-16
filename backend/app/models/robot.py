@@ -56,6 +56,11 @@ class Robot(Base):
     yaw: Mapped[float | None] = mapped_column(Float, nullable=True)
     linear_velocity: Mapped[float | None] = mapped_column(Float, nullable=True)
 
+    # Where this robot's ESP32-CAM serves MJPEG, e.g.
+    # "http://192.168.1.51:81/stream". Null means the robot has no camera,
+    # which is the normal case for a simulated one.
+    camera_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
     firmware_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
     last_error: Mapped[str | None] = mapped_column(String(255), nullable=True)
 

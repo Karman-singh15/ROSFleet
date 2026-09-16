@@ -22,11 +22,16 @@ class RobotCreate(BaseModel):
     code: str = Field(min_length=1, max_length=32, examples=["RB001"])
     name: str = Field(min_length=1, max_length=120, examples=["Delivery Robot"])
     mode: RobotMode = RobotMode.SIMULATED
+    camera_url: str | None = Field(default=None, max_length=255,
+                                   examples=["http://192.168.1.51:81/stream"])
 
 
 class RobotUpdate(BaseModel):
     name: str | None = Field(default=None, max_length=120)
     mode: RobotMode | None = None
+    # An empty string clears the camera; None leaves it untouched. They have
+    # to be distinguishable, or a robot's camera could never be removed.
+    camera_url: str | None = Field(default=None, max_length=255)
 
 
 class RobotOut(BaseModel):
@@ -43,11 +48,55 @@ class RobotOut(BaseModel):
     y: float | None
     yaw: float | None
     linear_velocity: float | None
+    camera_url: str | None
     firmware_version: str | None
     last_error: str | None
     last_seen: datetime | None
     created_at: datetime
 
+
+
+
+# ----------------------------------------------------------------- camera
+class CameraStatus(BaseModel):
+    robot_id: int
+    # False for a SIMULATED robot, which cannot have a camera at all. The UI
+    # hides the panel entirely rather than offering something that will fail.
+    supported: bool
+    configured: bool
+    streaming: bool
+    viewers: int
+    last_frame_age_seconds: float | None
+    stale: bool
+    error: str | None
+    recording_id: str | None
+
+
+class RecordingStart(BaseModel):
+    mission_id: int | None = None
+
+
+class RecordingFrameOut(BaseModel):
+    index: int
+    filename: str
+    offset_seconds: float
+    bytes: int
+
+
+class RecordingSummary(BaseModel):
+    recording_id: str
+    robot_id: int
+    mission_id: int | None
+    started_at: float
+    stopped_at: float | None
+    duration_seconds: float
+    frame_count: int
+    total_bytes: int
+    max_fps: float
+
+
+class RecordingOut(RecordingSummary):
+    frames: list[RecordingFrameOut] = []
 
 # ------------------------------------------------------------------- maps
 class MapCreate(BaseModel):

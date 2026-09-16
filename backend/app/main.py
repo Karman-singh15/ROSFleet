@@ -19,7 +19,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import analytics, live, maps, missions, robots
+from app.api import analytics, camera, live, maps, missions, robots
 from app.api.deps import set_ros_client
 from app.core.config import get_settings
 from app.core.database import create_all
@@ -76,6 +76,7 @@ app.include_router(maps.router)
 app.include_router(missions.router)
 app.include_router(analytics.router)
 app.include_router(live.router)
+app.include_router(camera.router)
 
 
 @app.get("/api/health", tags=["system"])

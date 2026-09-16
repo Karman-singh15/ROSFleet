@@ -35,6 +35,14 @@ class Settings(BaseSettings):
     # Where uploaded map files are stored
     map_storage_dir: str = "./storage/maps"
 
+    # Where mission camera recordings are stored, one directory per recording
+    recording_storage_dir: str = "./storage/recordings"
+    # Frames per second written to disk while recording. The camera pushes
+    # more than this; storing all of them fills a disk and adds nothing.
+    recording_max_fps: float = 5.0
+    # How long a camera may go without a frame before the API calls it stale.
+    camera_stale_after_seconds: float = 5.0
+
     # Origins the browser may call the API from. Override with the
     # CORS_ORIGINS environment variable as a JSON list when the frontend runs
     # anywhere other than port 3000:
