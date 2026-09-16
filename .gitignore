@@ -3,6 +3,11 @@ ros_ws/build/
 ros_ws/devel/
 ros_ws/install/
 ros_ws/logs/
+# catkin_make drops these into the source tree on first build. The
+# CMakeLists.txt is a symlink into /opt/ros inside the container, so it is
+# meaningless - and broken - anywhere else.
+ros_ws/.catkin_workspace
+ros_ws/src/CMakeLists.txt
 *.pyc
 __pycache__/
 
@@ -25,6 +30,9 @@ out/
 # Backend
 backend/*.db
 backend/*.sqlite3
+
+# Runtime output: camera recordings, like uploaded maps, are not source
+storage/recordings/
 
 # OS
 .DS_Store
