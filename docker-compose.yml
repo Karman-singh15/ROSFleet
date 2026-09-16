@@ -47,6 +47,12 @@ services:
     # Needed for the USB serial adapter when you connect the real ESP32.
     # Uncomment once the hardware exists; leaving it on with no device
     # attached prevents the container from starting.
+    #
+    # THIS ONLY WORKS ON A LINUX HOST. Docker Desktop for Mac runs the
+    # container in a Linux VM with no USB passthrough, so the path below
+    # can never resolve however it is spelled. On macOS reach the ESP32
+    # over Wi-Fi (transport:=tcp) instead - see the macOS box in
+    # docs/HARDWARE_INTEGRATION.md, Step 8.
     # devices:
     #   - "/dev/tty.usbserial-0001:/dev/ttyUSB0"
 

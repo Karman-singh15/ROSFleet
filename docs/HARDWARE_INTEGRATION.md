@@ -465,9 +465,48 @@ Find the port:
 ls /dev/tty.* | grep -i -E "usb|slab|wch"
 ```
 
-If you are running ROS in Docker, pass the device through — uncomment the
-`devices:` block in `docker-compose.yml` with your actual device path, and
-restart the container.
+If you are running ROS in Docker **on Linux**, pass the device through —
+uncomment the `devices:` block in `docker-compose.yml` with your actual device
+path, and restart the container.
+
+> ### ⚠️ On macOS, this step does not work — skip to Wi-Fi
+>
+> Docker Desktop for Mac runs the container inside a Linux VM, and that VM has
+> **no USB passthrough**. `/dev/tty.usbserial-XXXX` exists on your Mac and
+> cannot be reached from inside the container, whatever you put in the
+> `devices:` block. Check which you are on with `docker context ls`: a
+> `desktop-linux` context means Docker Desktop, so this applies to you.
+>
+> This inverts "USB first, always" *for this step only* — and only for the
+> step where ROS is involved. Steps 1–7 still happen over USB, natively on the
+> Mac with `pio device monitor` and `esp32_console.py --serial`, with no Docker
+> anywhere. Nothing about the calibration changes.
+>
+> What changes is how ROS reaches the board. Do **Step 11 (Wi-Fi) before Step
+> 8**, then run this step over TCP instead of serial:
+>
+> ```bash
+> roslaunch robot_hardware hardware.launch transport:=tcp \
+>     esp32_ip:=192.168.1.50 lidar:=false
+> ```
+>
+> The container reaches your LAN normally, so nothing else differs. Beware
+> campus Wi-Fi with client isolation — your Mac and the ESP32 will both show
+> as connected while `PING,1` never answers. A phone hotspot settles it.
+>
+> **If you must have serial** — say the Wi-Fi is unusable — bridge the port to
+> TCP on the Mac host and point the existing `tcp` transport at it, rather
+> than fighting the VM:
+>
+> ```bash
+> brew install socat
+> socat TCP-LISTEN:9000,reuseaddr,fork /dev/tty.usbserial-XXXX,raw,b115200
+> roslaunch robot_hardware hardware.launch transport:=tcp \
+>     esp32_ip:=host.docker.internal lidar:=false
+> ```
+>
+> The bridge cannot tell the difference: same protocol, same bytes, just
+> carried over a socket.
 
 Then:
 
@@ -551,6 +590,12 @@ Iterate until both are within about 2%. Update all three files, run
 ---
 
 ## Step 10 — Add the LiDAR
+
+> **macOS note.** The RPLiDAR is a USB device too, so the same Docker
+> Desktop limitation above applies: the container cannot see
+> `/dev/tty.usbserial-*`. Use the `socat` bridge from Step 8, or run the
+> LiDAR from a Linux host. Unlike the ESP32, the LiDAR has no Wi-Fi of its
+> own, so there is no way around this one.
 
 The RPLiDAR is a separate USB device with its own ROS driver. The firmware
 knows nothing about it.
