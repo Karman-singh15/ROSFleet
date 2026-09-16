@@ -29,8 +29,9 @@ whole of it.
 14. [Step 11 — Cut the cable: switch to Wi-Fi](#step-11--cut-the-cable-switch-to-wi-fi)
 15. [Step 12 — Map your building](#step-12--map-your-building)
 16. [Step 13 — First autonomous mission](#step-13--first-autonomous-mission)
-17. [Troubleshooting](#troubleshooting)
-18. [Safety](#safety)
+17. [Step 14 — Add the ESP32-CAM](#step-14--add-the-esp32-cam)
+18. [Troubleshooting](#troubleshooting)
+19. [Safety](#safety)
 
 ---
 
@@ -754,6 +755,100 @@ rostopic echo /mission_status
 
 **Check ✅** — the robot plans a path, drives it, avoids an obstacle you put
 in its way, arrives, and `/mission_status` reports `SUCCEEDED`.
+
+---
+
+## Step 14 — Add the ESP32-CAM
+
+Optional, and deliberately last: the camera changes nothing about how the
+robot drives. Do it once navigation works.
+
+### It is a second board, not an add-on
+
+The AI-Thinker ESP32-CAM has **its own ESP32 on it**. It does not connect to
+your motor ESP32 and shares no pins with it. It joins your Wi-Fi, serves
+MJPEG, and the backend pulls from it. Treat it as an independent device that
+happens to ride on the same chassis.
+
+Power it from the same pack through the buck converter — not from the motor
+ESP32's 3.3 V pin, which cannot supply the ~250 mA the camera draws when
+transmitting. A browning-out ESP32-CAM reboots in a loop and looks like a
+Wi-Fi problem.
+
+### Flashing it
+
+The ESP32-CAM has no USB port. You need an FTDI adapter, and you must jumper
+**GPIO0 to GND** to enter bootloader mode, then remove that jumper and reset
+to run. Forgetting the jumper is the single most common ESP32-CAM problem.
+
+Flash the stock `CameraWebServer` example from the Arduino ESP32 core, with
+the board set to **AI Thinker ESP32-CAM**. That firmware already serves what
+the backend expects; there is nothing in this repository to flash onto it.
+
+On the serial monitor at 115200 you will see the address it claims:
+
+```
+WiFi connected
+Camera Ready! Use 'http://192.168.1.51' to connect
+```
+
+The stream itself is on **port 81**: `http://192.168.1.51:81/stream`.
+
+**Check ✅** — open that URL in a browser and you see live video. Do not go
+further until this works standalone; everything below assumes it does.
+
+### Telling ROSFleet about it
+
+On the robot's page in the dashboard, paste the stream URL into the camera
+field, or from the command line:
+
+```bash
+curl -X PATCH http://localhost:8000/api/robots/1 \
+  -H 'Content-Type: application/json' \
+  -d '{"camera_url": "http://192.168.1.51:81/stream"}'
+```
+
+The robot must be in **REAL** mode. A `SIMULATED` robot cannot have a camera
+and the API refuses to give it one: Gazebo's model carries no camera sensor,
+and attaching a real camera to a simulated pose would put a physical view
+behind a fake position. Switching a robot back to `SIMULATED` clears its
+camera URL with it.
+
+### Why the browser never talks to the camera directly
+
+The ESP32-CAM's web server handles **one client at a time**. A second viewer
+kills the first; add a recorder and it kills both. So the backend holds the
+single upstream connection and fans frames out to every viewer:
+
+```
+ESP32-CAM  --one connection-->  backend  --> tab 1
+                                        \--> tab 2
+                                         \-> recorder
+```
+
+This is also why the camera can live on the robot's own network and change
+IP without the frontend knowing anything about it.
+
+### Recording a mission
+
+**Record** on the robot page starts writing frames to
+`storage/recordings/<id>/`, tagged with the active mission. A recording is
+JPEG frames plus a `manifest.json`, not an mp4 — encoding video would need
+ffmpeg on the host, and stepping through frames is the more useful thing when
+the question is "what did it see when mission 104 failed". Frames also
+survive an interrupted recording; a half-written mp4 does not.
+
+Frames are throttled to 5 fps on disk (`RECORDING_MAX_FPS`). The camera
+pushes more; storing all of it fills a laptop and adds nothing.
+
+### What the camera does not do
+
+It does **not** help the robot navigate. Nothing in the navigation stack
+consumes it — no obstacle detection, no marker localisation, no visual
+odometry. It is an operator's view and a record, and the LiDAR remains the
+only sensor navigation uses. Adding vision to navigation is a separate
+project: camera calibration, a vision node, and TF work to put detections in
+the map frame.
 
 ---
 
