@@ -27,10 +27,35 @@ export interface Robot {
   y: number | null;
   yaw: number | null;
   linear_velocity: number | null;
+  camera_url: string | null;
   firmware_version: string | null;
   last_error: string | null;
   last_seen: string | null;
   created_at: string;
+}
+
+export interface CameraStatus {
+  robot_id: number;
+  supported: boolean;
+  configured: boolean;
+  streaming: boolean;
+  viewers: number;
+  last_frame_age_seconds: number | null;
+  stale: boolean;
+  error: string | null;
+  recording_id: string | null;
+}
+
+export interface RecordingSummary {
+  recording_id: string;
+  robot_id: number;
+  mission_id: number | null;
+  started_at: number;
+  stopped_at: number | null;
+  duration_seconds: number;
+  frame_count: number;
+  total_bytes: number;
+  max_fps: number;
 }
 
 export interface RobotMap {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { degrees, formatAgo, formatDistance, formatDuration } from "@/lib/format";
 import { usePoll } from "@/lib/useLive";
+import { CameraView } from "@/components/CameraView";
 import type { Mission, Robot } from "@/lib/types";
 import {
   Battery,
@@ -112,6 +113,8 @@ export default function RobotDetail({
           hint={robot.firmware_version ?? undefined}
         />
       </div>
+
+      <CameraView robot={robot} missionId={active?.id ?? null} />
 
       {active && (
         <Panel title="Current mission">
